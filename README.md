@@ -1,4 +1,4 @@
-type /souls to access the commands or /souls menu to see the UI. Your choice but your soul is mine.
+type /soulgospel to access the commands. Your choice but your soul is mine.
 
 enjoy :)
 
