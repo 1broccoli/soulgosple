@@ -1,9 +1,9 @@
 ## Interface: 11400
 ## Title: Soul Gospel
-## Notes: Plays Mortal Kombat Shang Tsung "Your soul is mine" when you get a soul shard.
-## Author: |cffe6cc80Pegga|r
+## Notes: |cff00ff00Plays Mortal Kombat Shang Tsung "Your soul is mine" when you get a soul shard.|r
+## Author: |cff39ff14Pegga|r
 ## Contributors: Orchimedes <Stay Classy> - US - Nightslayer
-## Version: 1.5
+## Version: 1.6
 ## SavedVariables: SoulGospelDB
 ## Website https://github.com/1broc2coli?tab=repositories
 
