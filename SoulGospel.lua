@@ -35,7 +35,7 @@ InitializeSettings()
 
 -- Create a frame for the UI
 local uiFrame = CreateFrame("Frame", "SoulGospelFrame", UIParent, "BackdropTemplate")
-uiFrame:SetSize(SoulGospelDB.frameSize.width, SoulGospelDB.frameSize.height)
+uiFrame:SetSize(SoulGospelDB.frameSize.width, SoulGospelDB.frameSize.height + 65) -- Adjust the frame's height
 uiFrame:SetPoint(SoulGospelDB.position.point, SoulGospelDB.position.relativeTo, SoulGospelDB.position.relativePoint, SoulGospelDB.position.xOfs, SoulGospelDB.position.yOfs)
 uiFrame:SetBackdrop({
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -64,6 +64,62 @@ local titleText = uiFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"
 titleText:SetPoint("TOP", uiFrame, "TOP", 0, -10)
 titleText:SetText("|cFF39FF14Soul Gospel|r") -- Neon green text
 
+-- Texture on the left of the title
+local leftTexture = uiFrame:CreateTexture(nil, "OVERLAY")
+leftTexture:SetSize(24, 24)
+leftTexture:SetPoint("RIGHT", titleText, "LEFT", -5, 0)
+leftTexture:SetTexture("Interface\\AddOns\\SoulGospel\\sglol3.png")
+
+-- Animation group for left pulsating effect
+local leftPulsate = leftTexture:CreateAnimationGroup()
+local leftScaleUp = leftPulsate:CreateAnimation("Scale")
+leftScaleUp:SetScale(1.2, 1.2)
+leftScaleUp:SetDuration(0.5)
+leftScaleUp:SetSmoothing("IN_OUT")
+
+local leftScaleDown = leftPulsate:CreateAnimation("Scale")
+leftScaleDown:SetScale(0.8333, 0.8333) -- Inverse of 1.2 to return to original size
+leftScaleDown:SetDuration(0.5)
+leftScaleDown:SetSmoothing("IN_OUT")
+leftScaleDown:SetStartDelay(0.5)
+
+local leftAlphaChange = leftPulsate:CreateAnimation("Alpha")
+leftAlphaChange:SetFromAlpha(1)
+leftAlphaChange:SetToAlpha(0.5)
+leftAlphaChange:SetDuration(0.5)
+leftAlphaChange:SetSmoothing("IN_OUT")
+
+leftPulsate:SetLooping("REPEAT")
+leftPulsate:Play()
+
+-- Texture on the right of the title
+local rightTexture = uiFrame:CreateTexture(nil, "OVERLAY")
+rightTexture:SetSize(24, 24)
+rightTexture:SetPoint("LEFT", titleText, "RIGHT", 5, 0)
+rightTexture:SetTexture("Interface\\AddOns\\SoulGospel\\sglol3.png")
+
+-- Animation group for right pulsating effect
+local rightPulsate = rightTexture:CreateAnimationGroup()
+local rightScaleUp = rightPulsate:CreateAnimation("Scale")
+rightScaleUp:SetScale(1.2, 1.2)
+rightScaleUp:SetDuration(0.5)
+rightScaleUp:SetSmoothing("IN_OUT")
+
+local rightScaleDown = rightPulsate:CreateAnimation("Scale")
+rightScaleDown:SetScale(0.8333, 0.8333) -- Inverse of 1.2 to return to original size
+rightScaleDown:SetDuration(0.5)
+rightScaleDown:SetSmoothing("IN_OUT")
+rightScaleDown:SetStartDelay(0.5)
+
+local rightAlphaChange = rightPulsate:CreateAnimation("Alpha")
+rightAlphaChange:SetFromAlpha(1)
+rightAlphaChange:SetToAlpha(0.5)
+rightAlphaChange:SetDuration(0.5)
+rightAlphaChange:SetSmoothing("IN_OUT")
+
+rightPulsate:SetLooping("REPEAT")
+rightPulsate:Play()
+
 -- Texture next to the title
 local titleTexture = uiFrame:CreateTexture(nil, "OVERLAY")
 titleTexture:SetSize(24, 24)
@@ -91,11 +147,11 @@ local function CreateSlider(parent, label, minVal, maxVal, defaultVal, yOffset, 
     slider:SetWidth(150)
 
     local sliderLabel = slider:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    sliderLabel:SetPoint("BOTTOM", slider, "TOP", 0, 0)
+    sliderLabel:SetPoint("BOTTOM", slider, "TOP", 0, 10)  -- Move the slider slightly down from its title
     sliderLabel:SetText(label)
 
     local sliderValue = slider:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    sliderValue:SetPoint("TOP", slider, "BOTTOM", 0, 0)
+    sliderValue:SetPoint("TOP", slider, "BOTTOM", 0, -10)
     sliderValue:SetText(slider:GetValue())
 
     slider:SetScript("OnValueChanged", function(self, value)
@@ -103,6 +159,42 @@ local function CreateSlider(parent, label, minVal, maxVal, defaultVal, yOffset, 
         if onValueChanged then
             onValueChanged(value)
         end
+    end)
+
+    local inputBox = CreateFrame("EditBox", nil, slider, "InputBoxTemplate")
+    inputBox:SetSize(50, 20)
+    inputBox:SetPoint("CENTER", sliderLabel, "CENTER")  -- Place input box over the title's text
+    inputBox:SetAutoFocus(true)
+    inputBox:SetNumeric(true)
+    inputBox:SetScript("OnEnterPressed", function(self)
+        local value = tonumber(self:GetText())
+        if value then
+            slider:SetValue(value)
+        end
+        self:Hide()
+        sliderLabel:Show()  -- Show the title text
+    end)
+    inputBox:SetScript("OnEscapePressed", function(self)
+        self:Hide()
+        sliderLabel:Show()  -- Show the title text
+    end)
+    inputBox:Hide()
+
+    sliderLabel:SetScript("OnMouseDown", function(self, button)
+        if button == "LeftButton" then
+            inputBox:SetText(tostring(math.floor(slider:GetValue())))
+            inputBox:Show()
+            self:Hide()  -- Hide the title text
+        end
+    end)
+
+    sliderLabel:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Click title to set volume", 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    sliderLabel:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
     end)
 
     return slider
@@ -155,7 +247,7 @@ local function InitializeCheckbox(checkbox, isChecked)
 end
 
 -- Create the volume slider
-local volumeSlider = CreateSlider(uiFrame, "Volume", 1, 100, SoulGospelDB.volume, -110, function(value)
+local volumeSlider = CreateSlider(uiFrame, "|cFFA020F0Volume|r", 1, 100, SoulGospelDB.volume, -125, function(value)
     SoulGospelDB.volume = value
 end)
 
@@ -167,14 +259,27 @@ local function InitializeUI()
 end
 
 -- Create the "Test" button
-local testButton = CreateFrame("Button", nil, uiFrame, "UIPanelButtonTemplate")
-testButton:SetSize(100, 24)
-testButton:SetPoint("BOTTOM", uiFrame, "BOTTOM", 0, 10)
-testButton:SetText("Test")
-testButton:SetNormalFontObject("GameFontNormal")
-testButton:SetHighlightFontObject("GameFontHighlight")
+local testButton = CreateFrame("Button", nil, uiFrame)
+testButton:SetSize(40, 40)
+testButton:SetPoint("TOP", volumeSlider, "BOTTOM", 0, -30)
+
+-- Set button texture
+testButton:SetNormalTexture("Interface\\AddOns\\SoulGospel\\testsound.png")
+
+-- Set button script to play sound
 testButton:SetScript("OnClick", function()
     PlaySoulSound()
+end)
+
+-- Add tooltip to the button
+testButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText("Click to Test volume", 0, 1, 0) -- Neon green text
+    GameTooltip:Show()
+end)
+
+testButton:SetScript("OnLeave", function()
+    GameTooltip:Hide()
 end)
 
 -- Cooldown variable to prevent sound from playing too frequently
@@ -232,7 +337,7 @@ end
 
 -- Create the prompt frame
 local promptFrame = CreateFrame("Frame", "SoulGospelPromptFrame", UIParent, "BackdropTemplate")
-promptFrame:SetSize(300, 200)
+promptFrame:SetSize(300, 150)  -- Adjust the frame's height
 promptFrame:SetPoint("CENTER")
 promptFrame:SetBackdrop({
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -242,6 +347,11 @@ promptFrame:SetBackdrop({
 })
 promptFrame:SetBackdropColor(0, 0, 0, 0.8)
 promptFrame:SetBackdropBorderColor(0, 0, 0)
+promptFrame:EnableMouse(true)
+promptFrame:SetMovable(true)
+promptFrame:RegisterForDrag("LeftButton")
+promptFrame:SetScript("OnDragStart", promptFrame.StartMoving)
+promptFrame:SetScript("OnDragStop", promptFrame.StopMovingOrSizing)
 promptFrame:Hide() -- Hide the frame initially
 
 -- Title text for the prompt frame
@@ -249,10 +359,73 @@ local promptTitleText = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontNo
 promptTitleText:SetPoint("TOP", promptFrame, "TOP", 0, -10)
 promptTitleText:SetText("|cFF39FF14Soul Gospel|r") -- Neon green text
 
+-- Warning text in red color
+local warningText = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+warningText:SetPoint("TOP", promptTitleText, "BOTTOM", 0, -10)
+warningText:SetText("|cFFFF0000WARNING|r") -- Red text
+
+-- Texture to the left of the warning text
+local leftPulsatingTexture = promptFrame:CreateTexture(nil, "OVERLAY")
+leftPulsatingTexture:SetSize(24, 24)
+leftPulsatingTexture:SetPoint("RIGHT", warningText, "LEFT", -10, 0)
+leftPulsatingTexture:SetTexture("Interface\\AddOns\\SoulGospel\\sglol3.png")
+
+-- Animation group for left pulsating effect
+local leftPulsate = leftPulsatingTexture:CreateAnimationGroup()
+local leftScaleUp = leftPulsate:CreateAnimation("Scale")
+leftScaleUp:SetScale(1.2, 1.2)
+leftScaleUp:SetDuration(0.5)
+leftScaleUp:SetSmoothing("IN_OUT")
+
+local leftScaleDown = leftPulsate:CreateAnimation("Scale")
+leftScaleDown:SetScale(0.8333, 0.8333) -- Inverse of 1.2 to return to original size
+leftScaleDown:SetDuration(0.5)
+leftScaleDown:SetSmoothing("IN_OUT")
+leftScaleDown:SetStartDelay(0.5)
+
+local leftColorChange = leftPulsate:CreateAnimation("Alpha")
+leftColorChange:SetFromAlpha(1)
+leftColorChange:SetToAlpha(0)
+leftColorChange:SetDuration(0.5)
+leftColorChange:SetSmoothing("IN_OUT")
+
+leftPulsate:SetLooping("REPEAT")
+leftPulsate:Play()
+
+-- Texture to the right of the warning text
+local rightPulsatingTexture = promptFrame:CreateTexture(nil, "OVERLAY")
+rightPulsatingTexture:SetSize(24, 24)
+rightPulsatingTexture:SetPoint("LEFT", warningText, "RIGHT", 10, 0)
+rightPulsatingTexture:SetTexture("Interface\\AddOns\\SoulGospel\\sglol3.png")
+
+-- Animation group for right pulsating effect
+local rightPulsate = rightPulsatingTexture:CreateAnimationGroup()
+local rightScaleUp = rightPulsate:CreateAnimation("Scale")
+rightScaleUp:SetScale(1.2, 1.2)
+rightScaleUp:SetDuration(0.5)
+rightScaleUp:SetSmoothing("IN_OUT")
+
+local rightScaleDown = rightPulsate:CreateAnimation("Scale")
+rightScaleDown:SetScale(0.8333, 0.8333) -- Inverse of 1.2 to return to original size
+rightScaleDown:SetDuration(0.5)
+rightScaleDown:SetSmoothing("IN_OUT")
+rightScaleDown:SetStartDelay(0.5)
+
+local rightColorChange = rightPulsate:CreateAnimation("Color")
+local rightColorChange = rightPulsate:CreateAnimation("Alpha")
+rightColorChange:SetFromAlpha(1)
+rightColorChange:SetToAlpha(0)
+rightColorChange:SetDuration(0.5)
+rightColorChange:SetSmoothing("IN_OUT")
+rightPulsate:SetLooping("REPEAT")
+rightPulsate:Play()
+
 -- Text explaining the addon
 local promptText = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-promptText:SetPoint("TOP", promptTitleText, "BOTTOM", 0, -10)
-promptText:SetText("Keep the addon loaded if you are a warlock. Disable it if you are not.")
+promptText:SetPoint("TOP", warningText, "BOTTOM", 0, -10)
+promptText:SetWidth(260)  -- Set width to ensure word wrapping
+promptText:SetText("|cFFFFFFFFThis addon is designed for |cFF8787EDwarlocks|r. If you are not a |cFF8787EDwarlock|r, it is recommended to disable this addon to avoid unnecessary functionality.|r")
+promptText:SetWordWrap(true)
 
 -- Texture on the left of the title
 local leftTexture = promptFrame:CreateTexture(nil, "OVERLAY")
@@ -275,22 +448,45 @@ promptCloseButton:SetHighlightTexture("Interface\\AddOns\\SoulGospel\\close.png"
 promptCloseButton:SetScript("OnClick", function()
     promptFrame:Hide()
 end)
-
 -- Button to keep the addon loaded
 local keepAddonButton = CreateFrame("Button", nil, promptFrame, "UIPanelButtonTemplate")
 keepAddonButton:SetSize(100, 24)
-keepAddonButton:SetPoint("BOTTOMLEFT", promptFrame, "BOTTOMLEFT", 20, 20)
+keepAddonButton:SetPoint("BOTTOMLEFT", promptFrame, "BOTTOMLEFT", 20, 10)  -- Adjust button position
 keepAddonButton:SetText("Keep Loaded")
 keepAddonButton:SetNormalFontObject("GameFontNormal")
 keepAddonButton:SetHighlightFontObject("GameFontHighlight")
 keepAddonButton:SetScript("OnClick", function()
     promptFrame:Hide()
+
+    -- Create a large texture
+    local largeTexture = UIParent:CreateTexture(nil, "OVERLAY")
+    largeTexture:SetSize(300, 350)  -- Set the size of the texture
+    largeTexture:SetPoint("CENTER", UIParent, "CENTER")
+    largeTexture:SetTexture("Interface\\AddOns\\SoulGospel\\sglol2.png")
+    largeTexture:SetAlpha(1)
+
+    -- Fade out the large texture
+    local fadeOut = largeTexture:CreateAnimationGroup()
+    local fade = fadeOut:CreateAnimation("Alpha")
+    fade:SetFromAlpha(1)
+    fade:SetToAlpha(0)
+    fade:SetDuration(1)  -- Duration of the fade out
+    fade:SetSmoothing("OUT")
+    fadeOut:SetScript("OnFinished", function()
+        largeTexture:Hide()
+    end)
+    fadeOut:Play()
 end)
+
+-- Show the prompt frame if the player is not a warlock
+if not IsPlayerWarlock() then
+    promptFrame:Show()
+end
 
 -- Button to disable the addon
 local disableAddonButton = CreateFrame("Button", nil, promptFrame, "UIPanelButtonTemplate")
 disableAddonButton:SetSize(100, 24)
-disableAddonButton:SetPoint("BOTTOMRIGHT", promptFrame, "BOTTOMRIGHT", -20, 20)
+disableAddonButton:SetPoint("BOTTOMRIGHT", promptFrame, "BOTTOMRIGHT", -20, 10)  -- Adjust button position
 disableAddonButton:SetText("Disable Addon")
 disableAddonButton:SetNormalFontObject("GameFontNormal")
 disableAddonButton:SetHighlightFontObject("GameFontHighlight")
@@ -305,36 +501,35 @@ if not IsPlayerWarlock() then
 end
 
 -- Slash command handler
-SLASH_SOULGOSPEL1 = "/souls"
+SLASH_SOULGOSPEL1 = "/soulgospel"
 SlashCmdList["SOULGOSPEL"] = function(msg)
     local command, rest = msg:match("^(%S*)%s*(.-)$")
     if command == "on" then
         SoulGospelDB.soundEnabled = true
-        print("|cFF800080/souls|r Sound enabled.")
+        print("|cFF39FF14/soulgospel|r Sound enabled.")
     elseif command == "off" then
         SoulGospelDB.soundEnabled = false
-        print("|cFF800080/souls|r Sound disabled.")
+        print("|cFF39FF14/soulgospel|r Sound disabled.")
     elseif command == "volume" then
         local volume = tonumber(rest)
         if volume and volume >= 1 and volume <= 100 then
             SoulGospelDB.volume = volume
-            print("|cFF800080/souls|r Volume set to " .. volume .. ".")
+            print("|cFF39FF14/soulgospel|r Volume set to " .. volume .. ".")
         else
-            print("|cFF800080/souls|r Invalid volume. Please enter a value between 1 and 100.")
+            print("|cFF39FF14/soulgospel|r Invalid volume. Please enter a value between 1 and 100.")
         end
-    elseif command == "menu" then
-        if uiFrame:IsShown() then
-            uiFrame:Hide()
-        else
-            uiFrame:Show()
-        end
-    else
-        print("|cFF800080Souls|r Commands:")
-        print("|cFF800080/souls|r on - Enable sound")
-        print("|cFF800080/souls|r off - Disable sound")
-        print("|cFF800080/souls|r volume <1-100> - Set volume")
-        print("|cFF800080/souls|r menu - Open settings menu")
     end
+
+    -- Always show the UI frame and print commands
+    if not uiFrame:IsShown() then
+        uiFrame:Show()
+    end
+
+    print("|cFF39FF14Soul Gospel|r Commands:")
+    print("|cFF39FF14/SoulGospel|r on - Enable sound")
+    print("|cFF39FF14/SoulGospel|r off - Disable sound")
+    print("|cFF39FF14/SoulGospel|r volume <1-100> - Set volume")
+    print("|cFF39FF14/SoulGospel|r - Toggle settings menu")
 end
 
 -- Event frame for saving settings
