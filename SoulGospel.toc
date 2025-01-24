@@ -3,7 +3,7 @@
 ## Notes: |cff00ff00Plays Mortal Kombat Shang Tsung "Your soul is mine" when you get a soul shard.|r
 ## Author: |cff39ff14Pegga|r
 ## Contributors: Orchimedes <Stay Classy> - US - Nightslayer
-## Version: 1.6
+## Version: 1.7
 ## SavedVariables: SoulGospelDB
 ## Website https://github.com/1broc2coli?tab=repositories
 

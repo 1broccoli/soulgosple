@@ -298,22 +298,38 @@ local function PlaySoulSound()
     end
 end
 
--- Event handler for soul shard
-local frame = CreateFrame("Frame")
-
-frame:RegisterEvent("BAG_UPDATE_DELAYED")
-
-frame:SetScript("OnEvent", function(self, event)
-    if event == "BAG_UPDATE_DELAYED" then
-        for bag = 0, 4 do
-            for slot = 1, C_Container.GetContainerNumSlots(bag) do
-                local itemID = C_Container.GetContainerItemID(bag, slot)
-                if itemID == 6265 then
-                    PlaySoulSound()
-                    return
-                end
+-- Function to count the number of soul shards in the player's bags
+local function CountSoulShards()
+    local count = 0
+    for bag = 0, 4 do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
+            local itemID = C_Container.GetContainerItemID(bag, slot)
+            if itemID == 6265 then
+                count = count + 1
             end
         end
+    end
+    return count
+end
+
+-- Variable to store the previous count of soul shards
+local previousSoulShardCount = CountSoulShards()
+
+-- Event handler for bag updates
+local function OnBagUpdate()
+    local currentSoulShardCount = CountSoulShards()
+    if currentSoulShardCount > previousSoulShardCount then
+        PlaySoulSound()
+    end
+    previousSoulShardCount = currentSoulShardCount
+end
+
+-- Register the BAG_UPDATE_DELAYED event
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("BAG_UPDATE_DELAYED")
+frame:SetScript("OnEvent", function(self, event)
+    if event == "BAG_UPDATE_DELAYED" then
+        OnBagUpdate()
     end
 end)
 
